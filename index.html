@@ -1,67 +1,216 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Verificação de Números na Linha</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    #resultado { margin-top: 20px; font-weight: bold; white-space: pre-wrap; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M.BOOT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body>
 
-  <h2>ANALISE DE TERMINAL</h2>
+<body class="bg-black text-white font-sans">
+  <div id="app"></div>
 
-  <label for="inputNumeros">Digite 3 a 4 numeros ultimos):</label><br>
-  <input type="text" id="inputNumeros" size="50" placeholder="ex: 1,14,11,8,5" />
-  <button onclick="verificarLinha()">Verificar</button>
+<script>
+/* =========================
+   BASE
+========================= */
+const app = document.getElementById('app');
 
-  <div id="resultado"></div>
+function createElement(tag, className = '', content = '') {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (content) el.innerHTML = content;
+  return el;
+}
 
-  <script>
-    const linhas = {
-      0: [1,14,11,8,5,23,26,32,0,10,20,30],
-      1: [20,33,14,9,36,30,2,4,1,11,21,31],
-      2: [35,28,9,18,21,2,15,0,2,12,22,32],
-      3: [26,35,8,10,16,1,27,36,3,13,23,33],
-      4: [21,19,6,17,16,5,31,20,4,14,24,34],
-      5: [19,32,17,2,24,10,3,12,5,15,25,35],
-      6: [11,13,27,34,24,33,0,3,6,16,26,36],
-      7: [6,13,28,29,25,34,7,17,27],
-      8: [23,30,7,12,29,22,8,18,28],
-      9: [18,22,31,7,4,15,9,19,29]
-    };
+/* =========================
+   HEADER
+========================= */
+const header = createElement('header', 'bg-black text-center py-4');
+const title = createElement('h1', 'text-3xl font-bold text-yellow-400', 'M.BOOT');
+header.appendChild(title);
 
-    function verificarLinha() {
-      const entrada = document.getElementById('inputNumeros').value;
-      const numerosEntrada = entrada.split(',')
-        .map(n => n.trim())
-        .filter(n => n !== '')
-        .map(Number)
-        .filter(n => !isNaN(n));
+/* =========================
+   VARIÁVEIS GLOBAIS
+========================= */
+let numerosData = [];
+let jogadasAlvo = {};
+let analises = {};
+let usuarios = [];
+let recolhido = false;
 
-      if (numerosEntrada.length === 0) {
-        document.getElementById('resultado').innerText = 'Por favor, digite números válidos.';
-        return;
-      }
+/* =========================
+   FUNÇÕES AUXILIARES
+========================= */
+function pegarUltimos5Operacoes() {
+  return numerosData.slice(0, 5);
+}
 
-      let linhasComAcerto = [];
+function criarGrade(numeros) {
+  return numeros.map(n => `
+    <div class="numero w-7 h-7 text-xs flex items-center justify-center rounded
+      text-white font-semibold border" data-number="${n}">
+      ${n}
+    </div>
+  `).join('');
+}
 
-      for (const [indice, numerosLinha] of Object.entries(linhas)) {
-        const count = numerosEntrada.filter(num => numerosLinha.includes(num)).length;
-        if (count >= 3 && count <= 4) {
-          linhasComAcerto.push(indice);
-        }
-      }
+function aplicarCores(tipo) {
+  const ativos = analises[tipo] || [];
+  document.querySelectorAll('.numero').forEach(el => {
+    const n = parseInt(el.dataset.number);
+    el.className = `numero w-7 h-7 text-xs flex items-center justify-center rounded
+      text-white font-semibold border transition-all duration-300
+      ${ativos.includes(n) ? 'bg-red-800' : 'bg-blue-900'}`;
+  });
+}
 
-      if (linhasComAcerto.length === 0) {
-        document.getElementById('resultado').innerText = 'Nenhum terminal encontrado com 3 ou 4 números.';
-      } else {
-        // Mostra só os números das linhas separadas por vírgula
-        document.getElementById('resultado').innerText = linhasComAcerto.join(', ');
-      }
-    }
-  </script>
+function atualizarGrade() {
+  const grid = document.getElementById('grid');
+  if (!grid) return;
+  const dados = recolhido ? numerosData.slice(-10) : numerosData;
+  grid.innerHTML = criarGrade(dados);
+  const select = document.getElementById('analiseSelect');
+  if (select) aplicarCores(select.value);
+}
 
+/* =========================
+   ABAS
+========================= */
+const abaInicio = createElement('section', 'p-4', `
+  <div class="grid gap-4">
+    <a href="https://blaze.bet.br/pt/games/roleta-brasileira" target="_blank">
+      <img src="https://assets.sitecontents.net/slots/133/desktopImage-Roleta-Brasileira-1-min-1696619712031.jpg">
+    </a>
+    <a href="https://blaze.bet.br/pt/games/mega-fire-blaze-roleta-brasileira-live" target="_blank">
+      <img src="https://d205654a3b2af1b75209-275b861a8577e42fdaf34f4c14f5e708.ssl.cf3.rackcdn.com/rYvNQwPAz/OAdaOIKgmOeKLr.jpg">
+    </a>
+  </div>
+`);
+
+const abaOperacoes = createElement('section', 'p-4 hidden');
+abaOperacoes.innerHTML = `
+  <div class="flex justify-between mb-4">
+    <select id="analiseSelect" class="bg-gray-800 px-3 py-2 rounded w-1/2">
+      <option value="espelhos">ESPELHOS</option>
+      <option value="gemeos">GEMEOS</option>
+    </select>
+    <button id="recolherBtn" class="bg-yellow-600 text-black px-4 py-2 rounded">
+      ↑ Recolher ↑
+    </button>
+  </div>
+  <div class="p-2 border border-gray-700 rounded">
+    <div id="grid" class="grid grid-cols-9 gap-1"></div>
+  </div>
+`;
+
+const abaMuryllo = createElement('section', 'p-4 hidden', `
+  <h2 class="text-xl font-bold text-yellow-400 mb-4">M.BOOT</h2>
+  <input id="ultimosAlvo" class="w-full p-2 mb-3 bg-black border rounded"
+    placeholder="Ex: 10,20,30">
+  <button onclick="processarAlvo()"
+    class="w-full bg-yellow-400 text-black py-2 rounded font-bold">
+    Analisar
+  </button>
+  <div id="resultadoAlvo" class="mt-4 text-center"></div>
+`);
+
+/* =========================
+   NAV
+========================= */
+const nav = createElement('nav', 'fixed bottom-0 left-0 right-0 bg-gray-900 flex justify-around py-3');
+
+const btnInicio = createElement('button', 'flex flex-col items-center text-sm',
+  `<span class="material-icons">home</span>Inicio`);
+
+const btnOperacoes = createElement('button', 'flex flex-col items-center text-sm',
+  `<span class="material-icons">casino</span>Operações`);
+
+const btnMuryllo = createElement('button', 'flex flex-col items-center text-sm',
+  `<span class="material-icons">star</span>Muryllo`);
+
+/* =========================
+   TROCA DE ABAS
+========================= */
+function atualizarAbas(ativa) {
+  abaInicio.classList.add('hidden');
+  abaOperacoes.classList.add('hidden');
+  abaMuryllo.classList.add('hidden');
+
+  if (ativa === 'inicio') abaInicio.classList.remove('hidden');
+  if (ativa === 'operacoes') {
+    abaOperacoes.classList.remove('hidden');
+    atualizarGrade();
+  }
+  if (ativa === 'muryllo') {
+    abaMuryllo.classList.remove('hidden');
+    processarAlvo();
+  }
+}
+
+btnInicio.onclick = () => atualizarAbas('inicio');
+btnOperacoes.onclick = () => atualizarAbas('operacoes');
+btnMuryllo.onclick = () => {
+  if (verificarLogin()) atualizarAbas('muryllo');
+};
+
+/* =========================
+   LOGIN
+========================= */
+function verificarLogin() {
+  if (localStorage.getItem("login_ok") === "true") return true;
+
+  if (!usuarios.length) {
+    alert("⏳ Usuários carregando...");
+    return false;
+  }
+
+  const user = prompt("Usuário:");
+  const senha = prompt("Senha:");
+
+  const ok = usuarios.find(u => u.user === user && u.senha === senha);
+  if (ok) {
+    localStorage.setItem("login_ok", "true");
+    localStorage.setItem("login_user", user);
+    return true;
+  }
+
+  alert("❌ Login inválido");
+  return false;
+}
+
+/* =========================
+   PROCESSAR ALVO
+========================= */
+function processarAlvo() {
+  const nums = pegarUltimos5Operacoes();
+  if (!nums.length) return;
+  document.getElementById('ultimosAlvo').value = nums.join(', ');
+}
+
+/* =========================
+   FETCH DADOS
+========================= */
+fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
+  .then(r => r.json())
+  .then(d => {
+    numerosData = d.numerosData || [];
+    analises = d.analises || {};
+    jogadasAlvo = d.jogadasAlvo || {};
+    atualizarGrade();
+  });
+
+fetch('https://murylllobenigno-lab.github.io/Googlefiles/usuarios.json')
+  .then(r => r.json())
+  .then(d => usuarios = d.usuarios || []);
+
+/* =========================
+   MONTAGEM FINAL
+========================= */
+nav.append(btnInicio, btnOperacoes, btnMuryllo);
+app.append(header, abaInicio, abaOperacoes, abaMuryllo, nav);
+atualizarAbas('inicio');
+</script>
 </body>
 </html>
