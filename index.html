@@ -1,171 +1,629 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>MURYLLLO APP – Debug</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M.BOOT</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
+<body class="bg-black text-white font-sans">
 
-<body class="bg-black text-white font-sans p-4">
+<div id="app"></div>
 
-  <!-- TÍTULO -->
-  <h1 class="text-xl font-bold text-green-400 mb-4">🎯 MURYLLLO APP – Análises</h1>
+<!-- ========================= -->
+<!-- MODAL LOGIN -->
+<!-- ========================= -->
+<div id="loginModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+  <div class="bg-gray-900 p-6 rounded-xl w-80 relative">
+    <h2 class="text-xl font-bold text-yellow-400 mb-4 text-center">Login M.BOOT</h2>
+    <input id="loginUser" type="text" placeholder="Usuário" class="w-full p-2 mb-3 rounded bg-black border border-gray-700 text-white"/>
+    <input id="loginSenha" type="password" placeholder="Senha" class="w-full p-2 mb-3 rounded bg-black border border-gray-700 text-white"/>
+    <button onclick="confirmarLogin()" class="w-full bg-yellow-400 text-black font-bold py-2 rounded mb-2">Entrar</button>
+    <button onclick="fecharLogin()"></button>
+  </div>
+</div>
 
-  <!-- SELECT DE ANÁLISES -->
-  <div class="mb-4">
-    <label class="block mb-1 text-sm text-gray-300">Selecionar análise</label>
-    <select id="analiseSelect"
-      class="bg-gray-800 text-white px-3 py-2 rounded w-full"
-      onchange="aplicarCores(this.value)">
-    </select>
+<script>
+const app = document.getElementById('app');
+
+// =========================
+// VARIÁVEIS GLOBAIS
+// =========================
+let dadosPorRoleta = {};
+let roletaAtual = null;
+let usuarios = [];
+let numerosData = [];
+let jogadasAlvo = {};
+let analises = {};
+let recolhido = false;
+
+let zonasData = {}; // 👈 FALTAVA ISSO
+
+let zonaQuenteNome, zonaQuenteQtd;
+let zonaFriaNome, zonaFriaGiros;
+let numeroQuenteNome, numeroQuenteQtd;
+// =========================
+// FUNÇÕES GERAIS
+// =========================
+function createElement(tag, className = '', content = '') {
+  const el = document.createElement(tag);
+  if(className) el.className = className;
+  if(content) el.innerHTML = content;
+  return el;
+}
+
+function pegarUltimos5Operacoes(){
+  return numerosData.slice(0,5);
+}
+
+function criarGrade(numeros) {
+  return numeros.map(n => `
+    <div class="numero w-7 h-7 text-xs flex items-center justify-center rounded 
+      text-white font-semibold border" data-number="${n}">
+      ${n}
+    </div>
+  `).join('');
+}
+
+function aplicarCores(tipo) {
+  const key = Object.keys(analises).find(k => k.toLowerCase() === tipo.toLowerCase());
+  const ativos = analises[key] || [];
+  const numeros = document.querySelectorAll('.numero');
+
+  numeros.forEach(el => {
+    const n = parseInt(el.dataset.number);
+    el.className = `numero w-7 h-7 text-xs flex items-center justify-center rounded text-white font-semibold border transition-all duration-300 ${
+      ativos.includes(n) ? 'bg-red-800' : 'bg-blue-900'
+    }`;
+  });
+}
+
+function atualizarGrade() {
+  const grid = document.getElementById('grid');
+  if(!grid) return;
+  const dados = recolhido ? numerosData.slice(0,12) : numerosData;
+  grid.innerHTML = criarGrade(dados);
+  const select = document.getElementById('analiseSelect');
+  if(select) aplicarCores(select.value);
+}
+
+// =========================
+// HEADER
+// =========================
+
+// =========================
+// ABA INICIO
+// =========================
+const abaInicio = createElement('section','p-4');
+abaInicio.innerHTML = `
+<div class="space-y-4">
+
+  <div class="border-2 border-red-600 rounded-xl p-4 text-center">
+    <div class="text-red-400 font-bold text-lg">🔥 ZONA QUENTE ATIVA 🔥</div>
+    <div id="zonaQuenteNome" class="text-xl mt-2">---</div>
+    <div class="text-gray-400 text-sm">
+      Ocorrências: <span id="zonaQuenteQtd">0</span> / 12
+    </div>
   </div>
 
-  <!-- GRADE DE NÚMEROS -->
-  <div id="grade"
-    class="grid grid-cols-6 gap-2 mb-6">
+  <div class="border-2 border-blue-600 rounded-xl p-4 text-center">
+    <div class="text-blue-400 font-bold text-lg">❄️ ZONA FRIA ❄️</div>
+    <div id="zonaFriaNome" class="text-xl mt-2">---</div>
+    <div class="text-gray-400 text-sm">
+      Última ocorrência: <span id="zonaFriaGiros">---</span> giros
+    </div>
   </div>
 
-  <!-- PAINEL DEBUG -->
-  <div id="debugPanel" class="bg-gray-900 border border-gray-700 rounded p-3 text-sm">
-    <h2 class="text-green-400 font-bold mb-2">🧪 DEBUG CONSOLE</h2>
+  <div class="border-2 border-yellow-500 rounded-xl p-4 text-center">
+    <div class="text-yellow-400 font-bold text-lg">🎯 NÚMERO QUENTE 🎯</div>
+    <div id="numeroQuenteNome" class="text-2xl font-bold mt-2">---</div>
+    <div class="text-gray-400 text-sm">
+      <span id="numeroQuenteQtd">0</span>x nos últimos 12
+    </div>
+  </div>
 
-    <div class="flex gap-2 mb-2 flex-wrap">
-      <button onclick="debugStatus()" class="bg-blue-600 px-2 py-1 rounded">Status</button>
-      <button onclick="debugListarAnalises()" class="bg-purple-600 px-2 py-1 rounded">Listar Análises</button>
+</div>
+`;
+// =========================
+// ABA OPERACOES
+// =========================
+const abaOperacoes = createElement('section', 'p-4 hidden');
+abaOperacoes.innerHTML = `
+  <div class="flex justify-between items-center mb-4">
+    <select id="analiseSelect" class="bg-gray-800 text-white px-3 py-2 rounded w-1/2"></select>
+    <button id="recolherBtn" class="bg-yellow-600 text-black font-bold px-4 py-2 rounded ml-2">↑ Recolher ↑</button>
+  </div>
+  <div id="gridContainer" class="transition-colors duration-300 p-3 rounded border border-gray-700 bg-gradient-to-br from-gray-900 to-black max-h-[420px] overflow-y-auto">
+    <div id="grid" class="grid grid-cols-9 gap-1"></div>
+  </div><div class="mt-3">
+  <select id="roletaSelectBottom" class="w-full bg-gray-800 text-white px-3 py-2 rounded">
+    <option value="">Escolher roleta</option>
+    <option value="immersive">Immersive</option>
+    <option value="brasileira">Brasileira</option>
+    <option value="xxxtreme">XXXTreme</option>
+    <option value="auto roulette">Auto Roulette</option>
+    <option value="vip roulette">VIP Roulette</option>
+  </select>
+</div>
+`;
+
+// =========================
+// ABA MURYLLLO
+// =========================
+const abaMuryllo = createElement('section', 'p-4 hidden', `
+<!-- PAINEL MINI ZONAS -->
+<div class="bg-gray-900 p-2 rounded-xl max-w-md mx-auto text-xs">
+
+  <!-- Últimos -->
+  <div class="text-gray-400 mb-1">
+    <span id="ultimosZona">---</span>
+  </div>
+
+  <div class="flex gap-2 overflow-x-auto items-center">
+
+    <!-- ALVO PRINCIPAL -->
+    <div class="bg-yellow-500 text-black font-bold px-5 py-2 rounded">
+      <span id="alvoPrincipal">---</span>
     </div>
 
-    <div id="debugTerminal" class="flex gap-1 mb-2 flex-wrap"></div>
+    <!-- ALVOS SECUNDÁRIOS -->
+    <div class="bg-blue-600 text-white font-bold px-3 py-1 rounded">
+      <span id="alvoSec1">---</span>
+    </div>
 
-    <pre id="debugLog"
-      class="bg-black text-green-400 p-2 rounded max-h-48 overflow-auto text-xs font-mono"></pre>
+    <div class="bg-blue-600 text-white font-bold px-3 py-1 rounded mr-8">
+  <span id="alvoSec2">---</span>
+</div>
+
+    <!-- ZONA QUENTE -->
+    <div class="bg-red-900 text-red-300 px-3 py-1 rounded text-center">
+      Z🔥<br>
+      <b id="zonaQuentePainel">---</b>
+    </div>
+
+    <!-- ZONA FRIA -->
+    <div class="bg-blue-900 text-blue-300 px-3 py-1 rounded text-center">
+      Z❄️<br>
+      <b id="zonaFriaPainel">---</b>
+    </div>
+
+    <!-- NÚMEROS QUENTES -->
+    <div class="bg-orange-900 text-orange-300 px-3 py-1 rounded text-center">
+      N🔥<br>
+      <b id="numerosQuentesPainel">---</b>
+    </div>
+
   </div>
 
-  <!-- SCRIPT -->
-  <script>
-    let alvo = [];
-    let analise = {};
-    let jogada = {};
-   let terminalquente = {};
+</div>
+`);
+// =========================
+// BOTAO FALAR COM ADM
+// =========================
+ const butonBtnWrapper = createElement('div', 'fixed bottom-20 left-0 right-0 px-4 z-10');
+const butonBtn = createElement('a', 'block bg-blue-900 text-center text-white py-3 rounded-lg font-semibold shadow-lg hover: transition', 'FALAR COM ADM');
+butonBtn.href = 'https://www.instagram.com/murylllo_benygno?igsh=MW4wNG9tdGtteTFxdA==';
+butonBtn.target = '_blank';
+butonBtnWrapper.appendChild(butonBtn);
+  // =========================
+// inframe
+// =========================
+  <!-- IFRAME ROLETA -->
+const iframeArea = createElement(
+  'div',
+  'fixed left-0 right-0 bottom-0 top-20 z-40 bg-black hidden'
+);
 
-    /* ---------------- GRADE ---------------- */
+iframeArea.innerHTML = `
+  <div class="w-full h-full rounded-xl overflow-hidden border-2 border-black bg-black">
+    <iframe
+  id="roletaFrame"
+  class="w-full h-full border-0 block"
+  allowfullscreen>
+</iframe>
+  </div>
+`;
+app.appendChild(iframeArea);
 
-    function atualizarGrade() {
-      const grade = document.getElementById("grade");
-      grade.innerHTML = "";
+const roletaBtnWrapper = createElement(
+  'div',
+  'fixed bottom-20 left-0 right-0 px-4 z-10 hidden'
+);
 
-      for (let i = 0; i <= 36; i++) {
-        const div = document.createElement("div");
-        div.id = "num-" + i;
-        div.textContent = i;
-        div.className =
-          "bg-gray-800 rounded text-center py-3 border border-gray-700";
-        grade.appendChild(div);
+const roletaBtn = createElement(
+  'button',
+  'block w-full bg-black text-center text-red py-3 rounded-lg font-semibold shadow-lg',
+  'ABRIR ROLETA'
+);
+
+// ✅ ABRIR ROLETA
+roletaBtn.onclick = () => {
+  const frame = document.getElementById('roletaFrame');
+
+  iframeArea.classList.remove('hidden');
+  iframeArea.style.pointerEvents = 'auto';
+
+  // força recarregar a roleta
+  frame.src = '';
+  setTimeout(() => {
+    frame.src = 'https://7games.bet.br/pb/casino/slots/28/21031/immersive-roulette-evolution';
+  }, 100);
+};
+
+// ✅ FECHAR ROLETA
+function fecharIframe() {
+  iframeArea.classList.add('hidden');
+  iframeArea.style.pointerEvents = 'none';
+}
+
+roletaBtnWrapper.appendChild(roletaBtn);
+app.appendChild(roletaBtnWrapper);
+// =========================
+// NAV
+// =========================
+const nav = createElement(
+  'nav',
+  'fixed bottom-0 left-0 right-0 bg-gray-900 text-white flex justify-around py-3 border-t border-gray-700 z-50'
+);
+const btnInicio = createElement('button', 'flex flex-col items-center text-sm', `<span class="material-icons">home</span>Inicio`);
+const btnOperacoes = createElement('button', 'flex flex-col items-center text-sm', `<span class="material-icons">casino</span>Sala de operações`);
+const btnMuryllo = createElement('button', 'flex flex-col items-center text-sm', `<span class="material-icons">star</span>Muryllo`);
+/* =========================
+   ANÁLISE DE ZONAS
+========================= */
+function analisarZonas(){
+  if(!numerosData.length || !zonasData) return null;
+
+  const ultimos12 = numerosData.slice(0,12);
+  let contZonas={}, atrasoZonas={}, contNum={};
+
+  Object.keys(zonasData).forEach(z=>{
+    contZonas[z]=0;
+    atrasoZonas[z]=null;
+  });
+
+  numerosData.forEach((n,i)=>{
+    Object.entries(zonasData).forEach(([z,nums])=>{
+      if(nums.includes(n) && atrasoZonas[z]===null){
+        atrasoZonas[z]=i;
       }
+    });
+  });
+
+  ultimos12.forEach(n=>{
+    contNum[n]=(contNum[n]||0)+1;
+    Object.entries(zonasData).forEach(([z,nums])=>{
+      if(nums.includes(n)) contZonas[z]++;
+    });
+  });
+
+  const zonaQuente = Object.entries(contZonas)
+    .filter(([_,c])=>c>=3)
+    .sort((a,b)=>b[1]-a[1])[0];
+    
+
+  const zonaFria = Object.entries(atrasoZonas)
+  .filter(([_,v]) => v !== null)
+  .sort((a,b)=>b[1]-a[1])[0];
+
+  const numeroQuente = Object.entries(contNum)
+  .filter(([_,c])=>c>=2)
+  .sort((a,b)=>b[1]-a[1])
+  .slice(0,3);
+
+  return {zonaQuente,zonaFria,numeroQuente};
+}
+
+function atualizarPainelZonas(){
+  const r = analisarZonas();
+  if(!r) return;
+
+  // ZONA QUENTE
+  if(r.zonaQuente){
+    zonaQuenteNome.textContent = r.zonaQuente[0];
+    zonaQuenteQtd.textContent = r.zonaQuente[1];
+  } else {
+    zonaQuenteNome.textContent = '---';
+    zonaQuenteQtd.textContent = '0';
+  }
+
+  // ZONA FRIA
+  if(r.zonaFria){
+    zonaFriaNome.textContent = r.zonaFria[0];
+    zonaFriaGiros.textContent = r.zonaFria[1];
+  } else {
+    zonaFriaNome.textContent = '---';
+    zonaFriaGiros.textContent = '---';
+  }
+
+  // NÚMEROS QUENTES (todos que repetiram 2+ vezes)
+  if(r.numeroQuente){
+    const contNum = {};  
+    numerosData.slice(0,12).forEach(n => {  
+      contNum[n] = (contNum[n]||0) + 1;  
+    });
+
+    const numerosQuentes = Object.entries(contNum)
+      .filter(([_, c]) => c >= 2)
+      .sort((a,b) => b[1]-a[1]);
+
+    if(numerosQuentes.length){
+      numeroQuenteNome.textContent = numerosQuentes.map(n=>n[0]).join(', ');
+      numeroQuenteQtd.textContent = numerosQuentes.map(n=>n[1]).join(', ');
+    } else {
+      numeroQuenteNome.textContent = '---';
+      numeroQuenteQtd.textContent = '0';
     }
+  } else {
+    numeroQuenteNome.textContent = '---';
+    numeroQuenteQtd.textContent = '0';
+  }
+}
+/* =========================
+   APPEND
+========================= */
+app.append(abaInicio,abaOperacoes,abaMuryllo,nav);
+/* mapear ids */
+zonaQuenteNome=document.getElementById('zonaQuenteNome');
+zonaQuenteQtd=document.getElementById('zonaQuenteQtd');
+zonaFriaNome=document.getElementById('zonaFriaNome');
+zonaFriaGiros=document.getElementById('zonaFriaGiros');
+numeroQuenteNome=document.getElementById('numeroQuenteNome');
+numeroQuenteQtd=document.getElementById('numeroQuenteQtd');
+// =========================
+// FUNCOES ABA
+// =========================
+function atualizarAbas(ativa){
+  abaInicio.classList.add('hidden');
+  abaOperacoes.classList.add('hidden');
+  abaMuryllo.classList.add('hidden');
 
-    function limparGrade() {
-      for (let i = 0; i <= 36; i++) {
-        const el = document.getElementById("num-" + i);
-        if (el) el.style.background = "";
-      }
-    }
+  // Sempre esconder por padrão
+  roletaBtnWrapper.classList.add('hidden');
+  iframeArea.classList.add('hidden');
 
-    function destacarNumeros(lista) {
-      limparGrade();
-      lista.forEach(n => {
-        const el = document.getElementById("num-" + n);
-        if (el) el.style.background = "#16a34a";
-      });
-    }
+  btnInicio.classList.remove('text-yellow-400');
+  btnOperacoes.classList.remove('text-yellow-400');
+  btnMuryllo.classList.remove('text-yellow-400');
 
-    /* ---------------- ANÁLISES ---------------- */
+  switch(ativa){
+    case 'inicio':
+      abaInicio.classList.remove('hidden');
+      btnInicio.classList.add('text-yellow-400');
+      break;
 
-    function aplicarCores(nome) {
-      if (!analise[nome]) return;
-      if (Array.isArray(analise[nome])) {
-        destacarNumeros(analise[nome]);
-      }
-    }
+    case 'operacoes':
+      abaOperacoes.classList.remove('hidden');
+      btnOperacoes.classList.add('text-yellow-400');
+      atualizarGrade();
+      break;
 
-    function preencherAnalise() {
-      const select = document.getElementById("analiseSelect");
-      select.innerHTML = "";
+    case 'muryllo':
+  abaMuryllo.classList.remove('hidden');
+  btnMuryllo.classList.add('text-yellow-400');
 
-      Object.keys(analise).forEach((key, i) => {
-        const opt = document.createElement("option");
-        opt.value = key;
-        opt.textContent = key.toUpperCase();
-        if (i === 0) opt.selected = true;
-        select.appendChild(opt);
-      });
+  roletaBtnWrapper.classList.remove('hidden'); // botão aparece só aqui
 
-      aplicarCores(select.value);
-    }
+  processarAlvo();
+  break;
+  }
+}
 
-    /* ---------------- DEBUG ---------------- */
+btnInicio.onclick = () => atualizarAbas('inicio');
+btnOperacoes.onclick = () => atualizarAbas('operacoes');
+btnMuryllo.onclick = () => atualizarAbas('muryllo');
 
-    function logDebug(msg) {
-      const log = document.getElementById("debugLog");
-      log.textContent += msg + "\n";
-      log.scrollTop = log.scrollHeight;
-    }
+document.addEventListener('click', e => {
+  if(e.target && e.target.id==='recolherBtn'){
+    recolhido = !recolhido;
+    e.target.textContent = recolhido ? '↓ Expandir ↓' : '↑ Recolher ↑';
+    atualizarGrade();
+  }
+});
 
-    function debugStatus() {
-      logDebug("📊 STATUS");
-      logDebug("jogada: " + jogada.length);
-      logDebug("analise: " + Object.keys(analise).length);
-      logDebug("alvo: " + Object.keys(alvo).length);
-      logDebug("------------------");
-    }
+document.addEventListener('change', e => {
+  if(e.target.id==='analiseSelect'){
+    aplicarCores(e.target.value);
+  }
+});
 
-    function debugListarAnalises() {
-      logDebug("📋 ANÁLISES:");
-      Object.keys(analise).forEach(a => logDebug("• " + a));
-      logDebug("------------------");
-    }
+// =========================
+// PROCESSAR ALVO
+// =========================
+function processarAlvo(){
+  const nums = pegarUltimos5Operacoes();
+  if(!nums || nums.length<3){
+    document.getElementById('resultadoAlvo').innerHTML='<span class="text-gray-400">Sem dados suficientes</span>';
+    return;
+  }
+  const inputEl = document.getElementById('ultimosAlvo');
+  if(inputEl) inputEl.value = nums.join(', ');
 
-    function montarDebugTerminal() {
-      const div = document.getElementById("debugTerminal");
-      div.innerHTML = "";
+  let cont = {};
+  nums.forEach(n=>{
+    (jogadasAlvo[n]||[]).forEach(v=>{
+      cont[v] = (cont[v]||0)+1;
+    });
+  });
 
-      if (!analise["Terminal quente"]) return;
+  const top = Object.entries(cont)
+  .sort((a,b)=>b[1]-a[1])
+  .slice(0,3)
+  .map(e=>parseInt(e[0]));
 
-      logDebug("🔥 Terminal Quente detectado");
+// Atualiza painel mini
+document.getElementById("alvoPrincipal").textContent = top[0] ?? "---";
+document.getElementById("alvoSec1").textContent = top[1] ?? "---";
+document.getElementById("alvoSec2").textContent = top[2] ?? "---";}
 
-      for (let i = 0; i <= 9; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = i;
-        btn.className = "bg-red-600 px-2 py-1 rounded text-xs";
-        btn.onclick = () => {
-          logDebug("🎯 Terminal quente " + i);
-          destacarNumeros(analises["Terminal quente"][i] || []);
-        };
-        div.appendChild(btn);
-      }
-    }
+// =========================
+// LOGIN SEGURO 
+// =========================
+async function confirmarLogin() {
+  const u = loginUser.value.trim();
+  const s = loginSenha.value.trim();
 
-    /* ---------------- FETCH ---------------- */
+  // comparar diretamente com o JSON
+  const ok = usuarios.some(x => x.user === u && x.senha === s);
 
-    fetch("https://murylllobenigno-lab.github.io/V-rus.on/dados.json")
-      .then(r => r.json())
-      .then(dados => {
-        jogada = dados.jogada || [];
-        analise = dados.analise || {};
-        alvo = dados.alvo || {};
-         terminalquente = dados.terminalquente|| {};
+  if (!ok) return alert("❌ Usuário ou senha inválidos");
 
-        atualizarGrade();
-        preencherAnalise();
-        montarDebugTerminal();
+  loginUser.value = loginSenha.value = '';
 
-        logDebug("✅ JSON carregado com sucesso");
-      })
-      .catch(err => {
-        logDebug("❌ Erro ao carregar JSON");
-        console.error(err);
-      });
-  </script>
+  document.getElementById('loginModal').classList.add('hidden'); // esconde modal
+  atualizarGrade();        // desenha a grade
+  aplicarCores(document.getElementById('analiseSelect').value);  // coloração inicial
+}
 
+// =========================
+// CARREGAR JSON DE USUÁRIOS
+// =========================
+function carregarUsuarios() {
+  fetch('https://murylllobenigno-lab.github.io/Googlefiles/usuarios.json')
+    .then(r => r.json())
+    .then(dados => { usuarios = dados.usuarios || []; })
+    .catch(err => console.error("❌ Erro ao carregar usuários:", err));
+}
+function preencherAnalises() {
+  const select = document.getElementById('analiseSelect');
+  if (!select) return;
+
+  select.innerHTML = '';
+
+  Object.keys(analises).forEach((key, i) => {
+    const option = document.createElement('option');
+    option.value = key;
+    option.textContent = key.toUpperCase();
+    if (i === 0) option.selected = true;
+    select.appendChild(option);
+  });
+
+  aplicarCores(select.value);
+}
+carregarUsuarios();
+
+// =========================
+// APPEND
+// =========================
+nav.appendChild(btnInicio);
+nav.appendChild(btnOperacoes);
+nav.appendChild(btnMuryllo);
+app.appendChild(butonBtnWrapper);
+app.appendChild(abaInicio);
+app.appendChild(abaOperacoes);
+app.appendChild(abaMuryllo);
+app.appendChild(roletaBtnWrapper);
+app.appendChild(nav);
+
+// =========================
+// INICIO ABA
+// =========================
+atualizarAbas('inicio');
+
+// =========================
+// CARREGAR JSON DE DADOS
+// =========================
+  fetch('https://murylllobenigno-lab.github.io/Googlefiles/zonas.json')
+.then(r=>r.json())
+.then(d=>{zonasData=d; atualizarPainelZonas();});
+fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
+  .then(r=>r.json())
+  .then(dados=>{
+    numerosData = dados.numerosData || [];
+    analises = dados.analises || {};
+    jogadasAlvo = dados.jogadasAlvo || {};
+
+    atualizarGrade();
+    preencherAnalises(); // 👈 ESSENCIAL
+  })
+  .catch(err=>console.error("❌ Erro ao carregar JSON:",err));
+  
+  function preencherRoletas() {
+  const select = document.getElementById('roletaSelectBottom');
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Escolher roleta</option>';
+  Object.keys(dadosPorRoleta).forEach(nome => {
+    const opt = document.createElement('option');
+    opt.value = nome;
+    opt.textContent = nome.toUpperCase();
+    select.appendChild(opt);
+  });
+}
+  document.addEventListener('change', e => {
+  if (e.target.id === 'roletaSelectBottom') {
+    const nome = e.target.value;
+    if (!dadosPorRoleta[nome]) return;
+
+    numerosData = dadosPorRoleta[nome];
+
+    atualizarGrade();
+    atualizarPainelZonas();
+    atualizarQuadranteMuryllo(); // 🔥 atualiza painel Muryllo
+    processarAlvo();             // 🎯 atualiza alvos
+  }
+});
+  fetch('https://murylllobenigno-lab.github.io/Googlefiles/roletas.json')
+  .then(r => r.json())
+  .then(data => {
+  dadosPorRoleta = data;
+  roletaAtual = Object.keys(dadosPorRoleta)[0];
+  numerosData = dadosPorRoleta[roletaAtual] || [];
+
+  atualizarGrade();
+  atualizarPainelZonas();
+  atualizarQuadranteMuryllo(); 
+  processarAlvo();             
+  preencherRoletas();
+})
+  .catch(err => console.error("Erro ao carregar roletas:", err));
+  function atualizarQuadranteMuryllo(){
+  const ultimos = numerosData.slice(0,12);
+  document.getElementById("ultimosZona").textContent = ultimos.join(", ") || "---";
+
+  const r = analisarZonas();
+  if(!r) return;
+
+  // Zona quente
+  document.getElementById("zonaQuentePainel").textContent = r.zonaQuente ? r.zonaQuente[0] : "---";
+
+  // Zona fria
+  document.getElementById("zonaFriaPainel").textContent = r.zonaFria ? r.zonaFria[0] : "---";
+
+  // Números quentes
+  if(r.numeroQuente && r.numeroQuente.length){
+    document.getElementById("numerosQuentesPainel").textContent = r.numeroQuente.map(n=>n[0]).join(", ");
+  } else {
+    document.getElementById("numerosQuentesPainel").textContent = "---";
+  }
+
+  // Cards de força por zona
+  const cont = {};
+  Object.keys(zonasData).forEach(z=>cont[z]=0);
+
+  numerosData.slice(0,12).forEach(n=>{
+    Object.entries(zonasData).forEach(([z,nums])=>{
+      if(nums.includes(n)) cont[z]++;
+    });
+  });
+
+  const container = document.getElementById("cardsZonas");
+  container.innerHTML = "";
+
+  Object.entries(cont).forEach(([zona,qtd])=>{
+    let cor = "bg-slate-800 border-slate-600";
+    if(r.zonaQuente && zona === r.zonaQuente[0]) cor = "bg-red-800 border-red-500";
+    if(r.zonaFria && zona === r.zonaFria[0]) cor = "bg-blue-800 border-blue-500";
+
+    container.innerHTML += `
+      <div class="min-w-[90px] p-2 rounded-lg border ${cor} text-center">
+        <div class="text-yellow-400 font-bold">${zona}</div>
+        <div class="text-white text-lg">${qtd}</div>
+      </div>
+    `;
+  });
+}
+</script>
 </body>
 </html>
