@@ -542,9 +542,17 @@ atualizarAbas('inicio');
 // =========================  
 // CARREGAR JSON DE DADOS  
 // =========================  
-  fetch('https://murylllobenigno-lab.github.io/Googlefiles/zonas.json')  
-.then(r=>r.json())  
-.then(d=>{zonasData=d; atualizarPainelZonas();});  
+    fetch('https://murylllobenigno-lab.github.io/Googlefiles/zonas.json')
+.then(r => r.json())
+.then(d => {
+  zonasData = d || {};
+  atualizarPainelZonas();
+  atualizarQuadranteMuryllo();
+})
+.catch(err => {
+  console.error("Erro zonas:", err);
+  zonasData = {}; // evita travar tudo
+});
 fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')  
   .then(r=>r.json())  
   .then(dados=>{  
