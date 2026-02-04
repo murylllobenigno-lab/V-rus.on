@@ -583,13 +583,8 @@ fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
     carregarNumerosAPI(nome);  
   }  
 });
-  fetch('https://murylllobenigno-lab.github.io/Googlefiles/roletas.json')  
-  .then(r => r.json())  
-  .then(data => {  
-    dadosPorRoleta = data;  
-    roletaAtual = Object.keys(dadosPorRoleta)[0];  
-    numerosData = dadosPorRoleta[roletaAtual] || [];  
   
+ 
     atualizarGrade();
   atualizarPainelZonas();
   atualizarQuadranteMuryllo(); 
