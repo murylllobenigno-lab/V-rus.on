@@ -679,22 +679,7 @@ fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
     });
   }
 }
-  const container = document.getElementById("cardsZonas");
-  container.innerHTML = "";
-
-  Object.entries(cont).forEach(([zona,qtd])=>{
-    let cor = "bg-slate-800 border-slate-600";
-    if(r.zonaQuente && zona === r.zonaQuente[0]) cor = "bg-red-800 border-red-500";
-    if(r.zonaFria && zona === r.zonaFria[0]) cor = "bg-blue-800 border-blue-500";
-
-    container.innerHTML += `
-      <div class="min-w-[90px] p-2 rounded-lg border ${cor} text-center">
-        <div class="text-yellow-400 font-bold">${zona}</div>
-        <div class="text-white text-lg">${qtd}</div>
-      </div>
-    `;
-  });
-}
+  
   // Atualizar números automaticamente a cada 1 segundos
 setInterval(() => {
   if(roletaAtual && roletaAPIs[roletaAtual]) {
