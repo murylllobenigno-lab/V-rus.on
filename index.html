@@ -15,10 +15,10 @@
     <button onclick="fecharLogin()"></button>  
   </div>  
 </div>  <script>  
-  // 🎰 APIs DAS ROLETAS 
+  // 🎰 APIs DAS ROLETAS  
 const roletaAPIs = {  
-  immersive: "https://api-roulette.onrender.com/roulette",  
-  "auto roulette": ""  
+  immersive: "https://api.casinoscores.com/svc-evolution-game-events/api/immersiveroulette?page=0&size=200&sort=data.settledAt,desc&duration=6",  
+  "auto roulette": "https://api.casinoscores.com/svc-evolution-game-events/api/autoroulette?page=0&size=200&sort=data.settledAt,desc&duration=6"  
 };async function carregarNumerosAPI(nome) {  
   if (!roletaAPIs[nome]) return;  
   
@@ -604,7 +604,7 @@ fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
   // Zona fria
   document.getElementById("zonaFriaPainel").textContent = r.zonaFria ? r.zonaFria[0] : "---";
 
-    // Números quentes
+   // Números quentes
   if(r.numeroQuente && r.numeroQuente.length){
     document.getElementById("numerosQuentesPainel").textContent = r.numeroQuente.map(n=>n[0]).join(", ");
   } else {
@@ -637,12 +637,12 @@ fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
     `;
   });
 }
-  // Atualizar números automaticamente a cada 10 segundos
+  // Atualizar números automaticamente a cada 1 segundos
 setInterval(() => {
   if(roletaAtual && roletaAPIs[roletaAtual]) {
     carregarNumerosAPI(roletaAtual);
   }
-}, 6000); // 6000ms = 6s
+}, 1000); // 1000ms = 1s
 </script>
 </body>
 </html>
