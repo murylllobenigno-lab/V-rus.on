@@ -19,13 +19,12 @@
 const roletaAPIs = {  
   immersive: "https://api.casinoscores.com/svc-evolution-game-events/api/immersiveroulette?page=0&size=200&sort=data.settledAt,desc&duration=6",  
   "auto roulette": "https://api.casinoscores.com/svc-evolution-game-events/api/autoroulette?page=0&size=200&sort=data.settledAt,desc&duration=6"  
-};async function carregarNumerosAPI(nome) {
-  nome = nome.toLowerCase();
+};async function carregarNumerosAPI(nome) {  
   if (!roletaAPIs[nome]) return;  
-  
   try {  
-    const r = await fetch(roletaAPIs[nome]);  
-    const data = await r.json();  
+     const r = await fetch(roletaAPIs[nome] + "&_=" + Date.now(), {
+  cache: "no-store"});
+data = await r.json();  
   
     const numeros = [];  
   
@@ -44,13 +43,13 @@ const roletaAPIs = {
       atualizarQuadranteMuryllo();  
       processarAlvo();  
     }  
-  
+
   } catch (err) {  
     console.error("Erro API:", err);  
   }  
 }  
 const app = document.getElementById('app');  
-  
+  carregarNumerosAPI("immersive");  
   
 // =========================  
 // VARIÁVEIS GLOBAIS  
@@ -62,10 +61,8 @@ let numerosData = [];
 let jogadasAlvo = {};  
 let analises = {};  
 let recolhido = false;  
-  
-let zonasData = {}; // 👈 FALTAVA ISSO  
-  
-let zonaQuenteNome, zonaQuenteQtd;  
+  let zonasData = {}; // 👈 FALTAVA ISSO  
+  let zonaQuenteNome, zonaQuenteQtd;  
 let zonaFriaNome, zonaFriaGiros;  
 let numeroQuenteNome, numeroQuenteQtd;  
 // =========================  
@@ -90,7 +87,6 @@ function criarGrade(numeros) {
     </div>  
   `).join('');  
 }  
-  
 function aplicarCores(tipo) {  
   const key = Object.keys(analises).find(k => k.toLowerCase() === tipo.toLowerCase());  
   const ativos = analises[key] || [];  
@@ -103,8 +99,7 @@ function aplicarCores(tipo) {
     }`;  
   });  
 }  
-  
-function atualizarGrade() {  
+  function atualizarGrade() {  
   const grid = document.getElementById('grid');  
   if(!grid) return;  
   const dados = recolhido ? numerosData.slice(0,12) : numerosData;  
@@ -228,10 +223,11 @@ const butonBtn = createElement('a', 'block bg-blue-900 text-center text-white py
 butonBtn.href = 'https://www.instagram.com/murylllo_benygno?igsh=MW4wNG9tdGtteTFxdA==';  
 butonBtn.target = '_blank';  
 butonBtnWrapper.appendChild(butonBtn);  
- // =========================  
-// IFRAME ROLETA  
+  // =========================  
+// inframe  
 // =========================  
-const iframeArea = createElement(
+  <!-- IFRAME ROLETA -->  
+const iframeArea = createElement(  
   'div',  
   'fixed left-0 right-0 bottom-0 top-20 z-40 bg-black hidden'  
 );  
@@ -381,7 +377,10 @@ function atualizarPainelZonas(){
     numeroQuenteQtd.textContent = '0';  
   }  
 }  
-app.append(abaInicio,abaOperacoes,abaMuryllo,nav);
+/* =========================  
+   APPEND  
+========================= */  
+app.append(abaInicio,abaOperacoes,abaMuryllo,nav);  
 /* mapear ids */  
 zonaQuenteNome=document.getElementById('zonaQuenteNome');  
 zonaQuenteQtd=document.getElementById('zonaQuenteQtd');  
@@ -528,15 +527,16 @@ nav.appendChild(btnInicio);
 nav.appendChild(btnOperacoes);  
 nav.appendChild(btnMuryllo);  
 app.appendChild(butonBtnWrapper);  
- app.appendChild(roletaBtnWrapper);  
+app.appendChild(abaInicio);  
+app.appendChild(abaOperacoes);  
+app.appendChild(abaMuryllo);  
+app.appendChild(roletaBtnWrapper);  
 app.appendChild(nav);  
   
 // =========================  
 // INICIO ABA  
 // =========================  
 atualizarAbas('inicio');  
-  roletaAtual = "immersive";
-carregarNumerosAPI(roletaAtual);
   
 // =========================  
 // CARREGAR JSON DE DADOS  
@@ -567,19 +567,18 @@ fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
 }  
   document.addEventListener('change', e => {  
   if (e.target.id === 'roletaSelectBottom') {  
-    roletaAtual = e.target.value.toLowerCase();  
-    if (!roletaAPIs[roletaAtual]) roletaAtual = "immersive";  
-
-    carregarNumerosAPI(roletaAtual);  
+    let nome = e.target.value.toLowerCase();  
+    if (!roletaAPIs[nome]) nome = "immersive";  
+  
+    carregarNumerosAPI(nome);  
   }  
-});
+});  
   fetch('https://murylllobenigno-lab.github.io/Googlefiles/roletas.json')  
   .then(r => r.json())  
   .then(data => {  
-    dadosPorRoleta = data;    
-    if(!numerosData.length){
-  numerosData = dadosPorRoleta[roletaAtual] || [];
-}
+    dadosPorRoleta = data;  
+    roletaAtual = Object.keys(dadosPorRoleta)[0];  
+    numerosData = dadosPorRoleta[roletaAtual] || [];  
   
     atualizarGrade();
   atualizarPainelZonas();
@@ -600,8 +599,6 @@ fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
 
   // Zona fria
   document.getElementById("zonaFriaPainel").textContent = r.zonaFria ? r.zonaFria[0] : "---";
-
-   
 
 
 // Números quentes
@@ -642,7 +639,7 @@ setInterval(() => {
   if(roletaAtual && roletaAPIs[roletaAtual]) {
     carregarNumerosAPI(roletaAtual);
   }
-}, 1000); // 1000ms = 1s
+}, 8000); // 8000ms = 8s
 </script>
 </body>
 </html>
