@@ -381,7 +381,7 @@ function atualizarPainelZonas(){
     numeroQuenteQtd.textContent = '0';  
   }  
 }  
-
+app.append(abaInicio,abaOperacoes,abaMuryllo,nav);
 /* mapear ids */  
 zonaQuenteNome=document.getElementById('zonaQuenteNome');  
 zonaQuenteQtd=document.getElementById('zonaQuenteQtd');  
@@ -528,10 +528,7 @@ nav.appendChild(btnInicio);
 nav.appendChild(btnOperacoes);  
 nav.appendChild(btnMuryllo);  
 app.appendChild(butonBtnWrapper);  
-app.appendChild(abaInicio);  
-app.appendChild(abaOperacoes);  
-app.appendChild(abaMuryllo);  
-app.appendChild(roletaBtnWrapper);  
+ app.appendChild(roletaBtnWrapper);  
 app.appendChild(nav);  
   
 // =========================  
