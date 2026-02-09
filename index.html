@@ -16,9 +16,9 @@
   </div>  
 </div>  <script>  
   // 🎰 APIs DAS ROLETAS  
-const roletaAPIs = {  
-  immersive: "https://api.casinoscores.com/svc-evolution-game-events/api/immersiveroulette?page=0&size=200&sort=data.settledAt,desc&duration=6",  
-  "auto roulette": "https://api.casinoscores.com/svc-evolution-game-events/api/autoroulette?page=0&size=200&sort=data.settledAt,desc&duration=6"  
+ const roletaAPIs = {  
+  immersive: "https://api-roulette.onrender.com/roulette?table=immersive",  
+  "auto roulette": "https://api-roulette.onrender.com/roulette?table=auto" 
 };async function carregarNumerosAPI(nome) {
   nome = nome.toLowerCase();
   if (!roletaAPIs[nome]) return;  
