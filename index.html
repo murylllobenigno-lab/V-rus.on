@@ -19,9 +19,17 @@
  const roletaAPIs = {  
   immersive: "https://api-roulette.onrender.com/roulette?table=immersive",  
   "auto roulette": "https://api-roulette.onrender.com/roulette?table=auto" 
-};async function carregarNumerosAPI(nome) {
+};let carregando = false;
+
+async function carregarNumerosAPI(nome) {
+  if (carregando) return [];
+  carregando = true;
+
   nome = nome.toLowerCase();
-  if (!roletaAPIs[nome]) return [];
+  if (!roletaAPIs[nome]) {
+    carregando = false;
+    return [];
+  }
 
   try {
     const r = await fetch(roletaAPIs[nome]);
@@ -29,32 +37,28 @@
 
     const numeros = [];
 
-    // 👉 API nova (array simples)
     if (Array.isArray(data)) {
-      data.forEach(rodada => {
-        if (typeof rodada === "number") {
-          numeros.push(rodada);
-        } else if (rodada?.number !== undefined) {
-          numeros.push(rodada.number);
-        }
+      data.forEach(n => {
+        if (typeof n === "number") numeros.push(n);
+        else if (n?.number !== undefined) numeros.push(n.number);
       });
     }
 
-    // blindagem TOTAL
-    if (!numeros.length) return [];
-
-    numerosData = numeros;
-
-    atualizarGrade();
-    atualizarPainelZonas();
-    atualizarQuadranteMuryllo();
-    processarAlvo();
+    if (numeros.length) {
+      numerosData = numeros;
+      atualizarGrade();
+      atualizarPainelZonas();
+      atualizarQuadranteMuryllo();
+      processarAlvo();
+    }
 
     return numeros;
 
-  } catch (err) {
-    console.error("Erro API:", err);
+  } catch (e) {
+    console.error(e);
     return [];
+  } finally {
+    carregando = false;
   }
 }
 const app = document.getElementById('app');  
