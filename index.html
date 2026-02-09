@@ -62,7 +62,6 @@ async function carregarNumerosAPI(nome) {
   }
 }
 const app = document.getElementById('app');  
-  carregarNumerosAPI("immersive");  
   
 // =========================  
 // VARIÁVEIS GLOBAIS  
@@ -554,7 +553,8 @@ app.appendChild(nav);
 // INICIO ABA  
 // =========================  
 atualizarAbas('inicio');  
-  
+  roletaAtual = "immersive";
+carregarNumerosAPI(roletaAtual);
 // =========================  
 // CARREGAR JSON DE DADOS  
 // =========================  
