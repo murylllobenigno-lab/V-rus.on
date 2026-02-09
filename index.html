@@ -16,52 +16,41 @@
   </div>  
 </div>  <script>  
   // 🎰 APIs DAS ROLETAS  
- const roletaAPIs = {  
-  immersive: "https://api-roulette.onrender.com/roulette?table=immersive",  
-  "auto roulette": "https://api-roulette.onrender.com/roulette?table=auto" 
-};let carregando = false;
-
-async function carregarNumerosAPI(nome) {
-  if (carregando) return [];
-  carregando = true;
-
+const roletaAPIs = {  
+  immersive: "https://api.casinoscores.com/svc-evolution-game-events/api/immersiveroulette?page=0&size=200&sort=data.settledAt,desc&duration=6",  
+  "auto roulette": "https://api.casinoscores.com/svc-evolution-game-events/api/autoroulette?page=0&size=200&sort=data.settledAt,desc&duration=6"  
+};async function carregarNumerosAPI(nome) {
   nome = nome.toLowerCase();
-  if (!roletaAPIs[nome]) {
-    carregando = false;
-    return [];
-  }
-
-  try {
-    const r = await fetch(roletaAPIs[nome]);
-    const data = await r.json();
-
-    const numeros = [];
-
-    if (Array.isArray(data)) {
-      data.forEach(n => {
-        if (typeof n === "number") numeros.push(n);
-        else if (n?.number !== undefined) numeros.push(n.number);
-      });
-    }
-
-    if (numeros.length) {
-      numerosData = numeros;
-      atualizarGrade();
-      atualizarPainelZonas();
-      atualizarQuadranteMuryllo();
-      processarAlvo();
-    }
-
-    return numeros;
-
-  } catch (e) {
-    console.error(e);
-    return [];
-  } finally {
-    carregando = false;
-  }
-}
+  if (!roletaAPIs[nome]) return;  
+  
+  try {  
+    const r = await fetch(roletaAPIs[nome]);  
+    const data = await r.json();  
+  
+    const numeros = [];  
+  
+    data.forEach(rodada => {  
+      try {  
+        const num = rodada.data.result.outcome.number;  
+        numeros.push(num);  
+      } catch {}  
+    });  
+  
+    if (numeros.length) {  
+      numerosData = numeros;  
+  
+      atualizarGrade();  
+      atualizarPainelZonas();  
+      atualizarQuadranteMuryllo();  
+      processarAlvo();  
+    }  
+  
+  } catch (err) {  
+    console.error("Erro API:", err);  
+  }  
+}  
 const app = document.getElementById('app');  
+  
   
 // =========================  
 // VARIÁVEIS GLOBAIS  
@@ -239,11 +228,10 @@ const butonBtn = createElement('a', 'block bg-blue-900 text-center text-white py
 butonBtn.href = 'https://www.instagram.com/murylllo_benygno?igsh=MW4wNG9tdGtteTFxdA==';  
 butonBtn.target = '_blank';  
 butonBtnWrapper.appendChild(butonBtn);  
-  // =========================  
-// inframe  
+ // =========================  
+// IFRAME ROLETA  
 // =========================  
-  <!-- IFRAME ROLETA -->  
-const iframeArea = createElement(  
+const iframeArea = createElement(
   'div',  
   'fixed left-0 right-0 bottom-0 top-20 z-40 bg-black hidden'  
 );  
@@ -393,10 +381,7 @@ function atualizarPainelZonas(){
     numeroQuenteQtd.textContent = '0';  
   }  
 }  
-/* =========================  
-   APPEND  
-========================= */  
-app.append(abaInicio,abaOperacoes,abaMuryllo,nav);  
+
 /* mapear ids */  
 zonaQuenteNome=document.getElementById('zonaQuenteNome');  
 zonaQuenteQtd=document.getElementById('zonaQuenteQtd');  
@@ -555,6 +540,7 @@ app.appendChild(nav);
 atualizarAbas('inicio');  
   roletaAtual = "immersive";
 carregarNumerosAPI(roletaAtual);
+  
 // =========================  
 // CARREGAR JSON DE DADOS  
 // =========================  
@@ -594,7 +580,9 @@ fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
   .then(r => r.json())  
   .then(data => {  
     dadosPorRoleta = data;    
-    numerosData = dadosPorRoleta[roletaAtual] || [];  
+    if(!numerosData.length){
+  numerosData = dadosPorRoleta[roletaAtual] || [];
+}
   
     atualizarGrade();
   atualizarPainelZonas();
@@ -603,83 +591,55 @@ fetch('https://murylllobenigno-lab.github.io/Googlefiles/dados.json')
   preencherRoletas();
 })
   .catch(err => console.error("Erro ao carregar roletas:", err));
-  function atualizarQuadranteMuryllo() {
-  // 🔒 blindagem de DOM (ESSENCIAL online)
-  const ultimosZona = document.getElementById("ultimosZona");
-  const zonaQuentePainel = document.getElementById("zonaQuentePainel");
-  const zonaFriaPainel = document.getElementById("zonaFriaPainel");
-  const numerosQuentesPainel = document.getElementById("numerosQuentesPainel");
-  const container = document.getElementById("cardsZonas");
+  function atualizarQuadranteMuryllo(){
+  const ultimos = numerosData.slice(0,12);
+  document.getElementById("ultimosZona").textContent = ultimos.join(", ") || "---";
 
-  if (
-    !ultimosZona ||
-    !zonaQuentePainel ||
-    !zonaFriaPainel ||
-    !numerosQuentesPainel
-  ) {
-    return; // ⛔ se o DOM ainda não existe, NÃO quebra o app
+  const r = analisarZonas();
+  if(!r) return;
+
+  // Zona quente
+  document.getElementById("zonaQuentePainel").textContent = r.zonaQuente ? r.zonaQuente[0] : "---";
+
+  // Zona fria
+  document.getElementById("zonaFriaPainel").textContent = r.zonaFria ? r.zonaFria[0] : "---";
+
+   
+
+
+// Números quentes
+  if(r.numeroQuente && r.numeroQuente.length){
+    document.getElementById("numerosQuentesPainel").textContent = r.numeroQuente.map(n=>n[0]).join(", ");
+  } else {
+    document.getElementById("numerosQuentesPainel").textContent = "---";
   }
 
-  if (!Array.isArray(numerosData) || numerosData.length === 0) return;
-  if (!zonasData) return;
+  // Cards de força por zona
+  const cont = {};
+  Object.keys(zonasData).forEach(z=>cont[z]=0);
 
-  // limpa painéis
-  ultimosZona.innerHTML = "";
-  zonaQuentePainel.innerHTML = "";
-  zonaFriaPainel.innerHTML = "";
-  numerosQuentesPainel.innerHTML = "";
-
-  if (container) container.innerHTML = "";
-
-  // 🔹 últimos números
-  numerosData.slice(0, 12).forEach(num => {
-    const span = document.createElement("span");
-    span.className = "px-2 py-1 bg-gray-800 rounded text-sm";
-    span.textContent = num;
-    ultimosZona.appendChild(span);
-  });
-
-  // 🔹 zonas quentes
-  zonasData.quentes?.forEach(z => {
-    const div = document.createElement("div");
-    div.className = "px-2 py-1 bg-red-600 rounded text-sm";
-    div.textContent = `Zona ${z.zona} (${z.total})`;
-    zonaQuentePainel.appendChild(div);
-  });
-
-  // 🔹 zonas frias
-  zonasData.frias?.forEach(z => {
-    const div = document.createElement("div");
-    div.className = "px-2 py-1 bg-blue-600 rounded text-sm";
-    div.textContent = `Zona ${z.zona} (${z.total})`;
-    zonaFriaPainel.appendChild(div);
-  });
-
-  // 🔹 números quentes
-  zonasData.numerosQuentes?.forEach(n => {
-    const span = document.createElement("span");
-    span.className = "px-2 py-1 bg-green-600 rounded text-sm";
-    span.textContent = n;
-    numerosQuentesPainel.appendChild(span);
-  });
-
-  // 🔹 cards de zonas (se existir no HTML)
-  if (container && zonasData.todas) {
-    zonasData.todas.forEach(z => {
-      const card = document.createElement("div");
-      card.className =
-        "p-2 rounded bg-gray-900 border border-gray-700 text-xs";
-
-      card.innerHTML = `
-        <div class="font-bold mb-1">Zona ${z.zona}</div>
-        <div>Total: ${z.total}</div>
-      `;
-
-      container.appendChild(card);
+  numerosData.slice(0,12).forEach(n=>{
+    Object.entries(zonasData).forEach(([z,nums])=>{
+      if(nums.includes(n)) cont[z]++;
     });
-  }
+  });
+
+  const container = document.getElementById("cardsZonas");
+  container.innerHTML = "";
+
+  Object.entries(cont).forEach(([zona,qtd])=>{
+    let cor = "bg-slate-800 border-slate-600";
+    if(r.zonaQuente && zona === r.zonaQuente[0]) cor = "bg-red-800 border-red-500";
+    if(r.zonaFria && zona === r.zonaFria[0]) cor = "bg-blue-800 border-blue-500";
+
+    container.innerHTML += `
+      <div class="min-w-[90px] p-2 rounded-lg border ${cor} text-center">
+        <div class="text-yellow-400 font-bold">${zona}</div>
+        <div class="text-white text-lg">${qtd}</div>
+      </div>
+    `;
+  });
 }
-  
   // Atualizar números automaticamente a cada 1 segundos
 setInterval(() => {
   if(roletaAtual && roletaAPIs[roletaAtual]) {
