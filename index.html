@@ -61,10 +61,10 @@ let numerosData = [];
 let jogadasAlvo = {};  
 let analises = {};  
 let recolhido = false;  
-  let zonasData = {}; // 👈 FALTAVA ISSO  
-  let zonaQuenteNome, zonaQuenteQtd;  
-let zonaFriaNome, zonaFriaGiros;  
-let numeroQuenteNome, numeroQuenteQtd;  
+  let zonasData = {};
+let zonaQuenteNomeEl, zonaQuenteQtdEl;
+let zonaFriaNomeEl, zonaFriaGirosEl;
+let numeroQuenteNomeEl, numeroQuenteQtdEl;  
 // =========================  
 // FUNÇÕES GERAIS  
 // =========================  
@@ -378,12 +378,12 @@ function atualizarPainelZonas(){
 ========================= */  
 app.append(abaInicio,abaOperacoes,abaMuryllo,nav);  
 /* mapear ids */  
-zonaQuenteNome=document.getElementById('zonaQuenteNome');  
-zonaQuenteQtd=document.getElementById('zonaQuenteQtd');  
-zonaFriaNome=document.getElementById('zonaFriaNome');  
-zonaFriaGiros=document.getElementById('zonaFriaGiros');  
-numeroQuenteNome=document.getElementById('numeroQuenteNome');  
-numeroQuenteQtd=document.getElementById('numeroQuenteQtd');  
+zonaQuenteNomeEl = document.getElementById('zonaQuenteNome');
+zonaQuenteQtdEl = document.getElementById('zonaQuenteQtd');
+zonaFriaNomeEl = document.getElementById('zonaFriaNome');
+zonaFriaGirosEl = document.getElementById('zonaFriaGiros');
+numeroQuenteNomeEl = document.getElementById('numeroQuenteNome');
+numeroQuenteQtdEl = document.getElementById('numeroQuenteQtd');
 // =========================  
 // FUNCOES ABA  
 // =========================  
