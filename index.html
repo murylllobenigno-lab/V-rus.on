@@ -6,15 +6,7 @@
 <script src="https://cdn.tailwindcss.com"></script>  
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">  
 </head>  
-<body class="bg-black text-white font-sans">  <div id="app"></div>  <!-- ========================= -->  <!-- MODAL LOGIN -->  <!-- ========================= -->  <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">  
-  <div class="bg-gray-900 p-6 rounded-xl w-80 relative">  
-    <h2 class="text-xl font-bold text-yellow-400 mb-4 text-center">Login M.BOOT</h2>  
-    <input id="loginUser" type="text" placeholder="Usuário" class="w-full p-2 mb-3 rounded bg-black border border-gray-700 text-white"/>  
-    <input id="loginSenha" type="password" placeholder="Senha" class="w-full p-2 mb-3 rounded bg-black border border-gray-700 text-white"/>  
-    <button onclick="confirmarLogin()" class="w-full bg-yellow-400 text-black font-bold py-2 rounded mb-2">Entrar</button>  
-    <button onclick="fecharLogin()" class="w-full bg-red-600 py-2 rounded">Fechar</button>
-  </div>  
-</div>  <script>  
+<body class="bg-black text-white font-sans">  <div id="app"></div>  
   // 🎰 APIs DAS ROLETAS  
 const roletaAPIs = {  
   immersive: "https://api.casinoscores.com/svc-evolution-game-events/api/immersiveroulette?page=0&size=200&sort=data.settledAt,desc&duration=6",  
@@ -56,7 +48,6 @@ const app = document.getElementById('app');
 // =========================  
 let dadosPorRoleta = {};  
 let roletaAtual = null;  
-let usuarios = [];  
 let numerosData = [];  
 let jogadasAlvo = {};  
 let analises = {};  
@@ -469,52 +460,6 @@ function processarAlvo(){
 document.getElementById("alvoPrincipal").textContent = top[0] ?? "---";  
 document.getElementById("alvoSec1").textContent = top[1] ?? "---";  
 document.getElementById("alvoSec2").textContent = top[2] ?? "---";}  
-  
-// =========================  
-// LOGIN SEGURO   
-// =========================  
-async function confirmarLogin() {  
-  const u = loginUser.value.trim();  
-  const s = loginSenha.value.trim();  
-  
-  // comparar diretamente com o JSON  
-  const ok = usuarios.some(x => x.user === u && x.senha === s);  
-  
-  if (!ok) return alert("❌ Usuário ou senha inválidos");  
-  
-  loginUser.value = loginSenha.value = '';  
-  
-  document.getElementById('loginModal').classList.add('hidden'); // esconde modal  
-  atualizarGrade();        // desenha a grade  
-  aplicarCores(document.getElementById('analiseSelect').value);  // coloração inicial  
-}  
-  
-// =========================  
-// CARREGAR JSON DE USUÁRIOS  
-// =========================  
-function carregarUsuarios() {  
-  fetch('https://murylllobenigno-lab.github.io/Googlefiles/usuarios.json')  
-    .then(r => r.json())  
-    .then(dados => { usuarios = dados.usuarios || []; })  
-    .catch(err => console.error("❌ Erro ao carregar usuários:", err));  
-}  
-function preencherAnalises() {  
-  const select = document.getElementById('analiseSelect');  
-  if (!select) return;  
-  
-  select.innerHTML = '';  
-  
-  Object.keys(analises).forEach((key, i) => {  
-    const option = document.createElement('option');  
-    option.value = key;  
-    option.textContent = key.toUpperCase();  
-    if (i === 0) option.selected = true;  
-    select.appendChild(option);  
-  });  
-  
-  aplicarCores(select.value);  
-}  
-carregarUsuarios();  
   
 // =========================  
 // APPEND  
