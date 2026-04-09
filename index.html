@@ -12,7 +12,7 @@
     <input id="loginUser" type="text" placeholder="Usuário" class="w-full p-2 mb-3 rounded bg-black border border-gray-700 text-white"/>  
     <input id="loginSenha" type="password" placeholder="Senha" class="w-full p-2 mb-3 rounded bg-black border border-gray-700 text-white"/>  
     <button onclick="confirmarLogin()" class="w-full bg-yellow-400 text-black font-bold py-2 rounded mb-2">Entrar</button>  
-    <button onclick="fecharLogin()"></button>  
+    <button onclick="fecharLogin()" class="w-full bg-red-600 py-2 rounded">Fechar</button>
   </div>  
 </div>  <script>  
   // 🎰 APIs DAS ROLETAS  
@@ -24,7 +24,7 @@ const roletaAPIs = {
   try {  
      const r = await fetch(roletaAPIs[nome] + "&_=" + Date.now(), {
   cache: "no-store"});
-data = await r.json();  
+let data = await r.json(); 
   
     const numeros = [];  
   
@@ -107,10 +107,6 @@ function aplicarCores(tipo) {
   const select = document.getElementById('analiseSelect');  
   if(select) aplicarCores(select.value);  
 }  
-  
-// =========================  
-// HEADER  
-// =========================  
   
 // =========================  
 // ABA INICIO  
@@ -226,7 +222,7 @@ butonBtnWrapper.appendChild(butonBtn);
   // =========================  
 // inframe  
 // =========================  
-  <!-- IFRAME ROLETA -->  
+  // IFRAME ROLETA
 const iframeArea = createElement(  
   'div',  
   'fixed left-0 right-0 bottom-0 top-20 z-40 bg-black hidden'  
@@ -639,7 +635,7 @@ setInterval(() => {
   if(roletaAtual && roletaAPIs[roletaAtual]) {
     carregarNumerosAPI(roletaAtual);
   }
-}, 8000); // 8000ms = 8s
+}, 15000); // 15000ms = 8s
 </script>
 </body>
 </html>
