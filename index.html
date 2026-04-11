@@ -78,7 +78,7 @@ async function carregarNumerosAPI(nome) {
     const numeros = data.map(r => r?.data?.result?.outcome?.number).filter(n => n !== undefined);
 
     if(numeros.length){
-      numerosData = numeros;
+      numerosData = numeros.slice(0, 153);
       atualizarGrade();
       processarAlvo();
     }
@@ -94,26 +94,18 @@ const abaInicio = createElement('section','p-4', `
 <div class="text-center text-gray-400">Sistema pronto 🚀</div>
 `);
 
-const abaOperacoes = createElement('section','p-4 hidden flex flex-col h-screen', `
-
-<div class="flex justify-between mb-2">
+const abaOperacoes = createElement('section','p-4 hidden', `
+<div class="flex justify-between mb-3">
   <select id="analiseSelect" class="bg-gray-800 px-2 py-1 rounded"></select>
   <button id="recolherBtn" class="bg-yellow-600 px-3 rounded">↑</button>
 </div>
 
-<!-- GRID COM SCROLL -->
-<div class="flex-1 overflow-y-auto">
-  <div id="grid" class="grid grid-cols-9 gap-1"></div>
-</div>
+<div id="grid" class="grid grid-cols-9 gap-1"></div>
 
-<!-- SELECT FIXO EMBAIXO -->
-<div class="mt-2">
-  <select id="roletaSelectBottom" class="w-full bg-gray-800 px-2 py-2 rounded">
-    <option value="immersive">Immersive</option>
-    <option value="auto roulette">Auto Roulette</option>
-  </select>
-</div>
-
+<select id="roletaSelectBottom" class="w-full mt-3 bg-gray-800 px-2 py-2 rounded">
+  <option value="immersive">Immersive</option>
+  <option value="auto roulette">Auto Roulette</option>
+</select>
 `);
 const abaMuryllo = createElement('section','flex flex-col h-screen bg-black', `
 
@@ -141,12 +133,13 @@ const abaMuryllo = createElement('section','flex flex-col h-screen bg-black', `
 <div class="flex-1">
   <iframe 
     id="iframePrincipal"
-    class="w-full h-[calc(100vh-120px)]"
+    class="w-full h-[85vh]"
     src="https://7games.bet.br/pb/casino/slots/28/21031/immersive-roulette-evolution">
   </iframe>
 </div>
 
 `);
+
 
 
 // =========================
@@ -187,24 +180,17 @@ document.addEventListener('click', e=>{
   }
 });
 
-document.addEventListener('change', e => {
-
-  // 🎰 trocar roleta
-  if(e.target.id === 'roletaSelectBottom'){
-    const nome = e.target.value;
-
-    if(roletaAPIs[nome]){
-      roletaAtual = nome; // 🔥 MUITO IMPORTANTE
-      carregarNumerosAPI(nome);
-    }
-  }
-
-  // 🎨 aplicar cores
-  if(e.target.id === 'analiseSelect'){
+document.addEventListener('change', e=>{
+  if(e.target.id==='analiseSelect'){
     aplicarCores(e.target.value);
   }
 
+  if(e.target.id==='roletaSelectBottom'){
+    roletaAtual = e.target.value;
+    carregarNumerosAPI(roletaAtual);
+  }
 });
+
 // =========================
 // ALVO
 // =========================
