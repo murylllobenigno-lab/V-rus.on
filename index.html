@@ -78,7 +78,7 @@ async function carregarNumerosAPI(nome) {
     const numeros = data.map(r => r?.data?.result?.outcome?.number).filter(n => n !== undefined);
 
     if(numeros.length){
-      numerosData = numeros.slice(0, 100);
+      numerosData = numeros.slice(0, 20);
       atualizarGrade();
       processarAlvo();
     }
